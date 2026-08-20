@@ -1,0 +1,10 @@
+rhel_servers:
+  hosts:
+    rhel01:
+      ansible_hostname: rhel01.example.com
+    rhel02:
+      ansible_hostname: rhel02.example.com
+    rhel03:
+      ansible_hostname: rhel03.example.com
+    rhel04:
+      ansible_hostname: rhel04.example.com
