@@ -1,44 +1,80 @@
 ---
 - name: Example playbook using git and copy modules
-  hosts: "{{ target_hosts | default('all') }}"
+  hosts: all
   become: false
   gather_facts: false
+  vars_files:
+    - vars.yml
 
   tasks:
-    - name: Clone repo to local host
-      ansible.builtin.git:
-        repo: https://gitlab.com/reichmann-devops/ansible-demo.git
-        dest: /tmp/demo
-        single_branch: true
-        version: main
-        accept_newhostkey: true
-      delegate_to: localhost
+    - name: Clone repo block
+      when: inventory_hostname == 'fed01'
+      block:
+        - name: Create private key
+          ansible.builtin.copy:
+            content: "{{ private_key }}"
+            dest: "{{ playbook_dir }}/id_github"
+            mode: '0600'
+          delegate_to: localhost
 
-    - name: Copy file to remote host
-      ansible.builtin.copy:
-        src: /tmp/demo/simple_script.sh
-        dest: /tmp/
-        mode: '0655'
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        - name: Clone repo to local host using ssh
+          ansible.builtin.git:
+            repo: git@github.com:reichmann-devops/ansible-scripts.git
+            dest: /tmp/demo_ssh
+            single_branch: true
+            version: main
+            accept_newhostkey: true
+            key_file: "{{ playbook_dir }}/id_github"
+          delegate_to: localhost
 
-    - name: Run simple script on remote host
-      ansible.builtin.command:
-        cmd: bash /tmp/simple_script.sh
-      register: script_output
-      changed_when: false
+        - name: Clone repo to local host using https
+          ansible.builtin.git:
+            repo: "https://{{ gh_username }}:{{ gh_read_only_pat }}@github.com/reichmann-devops/ansible-scripts.git"
+            dest: /tmp/demo_https
+            single_branch: true
+            version: main
+          delegate_to: localhost
 
-    - name: Debugging output from script
-      ansible.builtin.debug:
-        var: script_output
+    - name: Copy files to remote servers
+      when: inventory_hostname != 'fed01'
+      block:
+        - name: Copy file to remote host
+          ansible.builtin.copy:
+            src: /tmp/demo/simple_script.sh
+            dest: /tmp/
+            mode: '0655'
+            owner: "{{ ansible_facts['user_id'] }}"
+            group: "{{ remote_user | default(omit) }}"
 
-    - name: Remove files from remote host
+        - name: Run simple script on remote host
+          ansible.builtin.command:
+            cmd: bash /tmp/simple_script.sh
+          register: script_output
+          changed_when: false
+
+        - name: Debugging output from script
+          ansible.builtin.debug:
+            var: script_output
+
+        - name: Remove files from remote host
+          ansible.builtin.file:
+            path: /tmp/demo
+            state: absent
+
+        - name: Remove files from local host
+          ansible.builtin.file:
+            path: /tmp/demo
+            state: absent
+          delegate_to: localhost
+
+  post_tasks:
+    - name: Remove the cloned repositories from localhost
       ansible.builtin.file:
-        path: /tmp/demo
+        path: "{{ _path }}"
         state: absent
-
-    - name: Remove files from local host
-      ansible.builtin.file:
-        path: /tmp/demo
-        state: absent
+      loop:
+        - /tmp/demo_ssh
+        - /tmp/demo_https
+      loop_control:
+        loop_var: _path
       delegate_to: localhost
