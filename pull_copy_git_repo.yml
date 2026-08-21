@@ -43,8 +43,6 @@
             src: /tmp/demo/simple_script.sh
             dest: /tmp/
             mode: '0655'
-            owner: "{{ ansible_facts['user_id'] }}"
-            group: "{{ remote_user | default(omit) }}"
 
         - name: Run simple script on remote host
           ansible.builtin.command:
