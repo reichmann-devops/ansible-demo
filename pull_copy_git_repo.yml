@@ -8,23 +8,23 @@
     - name: Read file
       ansible.builtin.debug:
         msg: "Current hostname is: {{ lookup('env', 'HOSTNAME') }}"
+      run_once: true
 
     - name: Clone repo to local host
       ansible.builtin.git:
-        repo: https://github.com/reichmann-devops/ansible-demo.git
+        repo: https://github.com/reichmann-devops/ansible-scripts.git
         dest: /tmp/demo
         single_branch: true
         version: main
         accept_newhostkey: true
       delegate_to: localhost
+      run_once: true
 
     - name: Copy file to remote host
       ansible.builtin.copy:
         src: /tmp/demo/simple_script.sh
         dest: /tmp/
         mode: '0655'
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
 
     - name: Run simple script on remote host
       ansible.builtin.command:
@@ -36,13 +36,13 @@
       ansible.builtin.debug:
         var: script_output
 
-    - name: Remove files from remote host
-      ansible.builtin.file:
-        path: /tmp/demo
-        state: absent
+    # - name: Remove files from remote host
+    #   ansible.builtin.file:
+    #     path: /tmp/demo
+    #     state: absent
 
-    - name: Remove files from local host
-      ansible.builtin.file:
-        path: /tmp/demo
-        state: absent
-      delegate_to: localhost
+    # - name: Remove files from local host
+    #   ansible.builtin.file:
+    #     path: /tmp/demo
+    #     state: absent
+    #   delegate_to: localhost
