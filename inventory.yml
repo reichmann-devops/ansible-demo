@@ -1,10 +1,10 @@
-fed_servers:
+rhel_servers:
   hosts:
-    fed01:
-      ansible_hostname: fed01.example.com
-    fed02:
-      ansible_hostname: fed02.example.com
-    fed03:
-      ansible_hostname: fed03.example.com
-    fed04:
-      ansible_hostname: fed04.example.com
+    rhel01:
+      ansible_hostname: rhel01.example.com
+    rhel02:
+      ansible_hostname: rhel02.example.com
+    rhel03:
+      ansible_hostname: rhel03.example.com
+    rhel04:
+      ansible_hostname: rhel04.example.com
